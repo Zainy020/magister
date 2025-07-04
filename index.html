@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bijles Portaal</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<style>
+:root {
+  --primary: #0064b5;
+  --primary-dark: #004c8b;
+  --bg: #f4f6f9;
+  --text: #1f2937;
+}
+* {
+  box-sizing: border-box;
+}
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+input,
+select,
+button {
+  font-size: 1rem;
+  padding: 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+button {
+  cursor: pointer;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  transition: background 0.2s;
+}
+button:hover {
+  background: var(--primary-dark);
+}
+button.secondary {
+  background: #e5e7eb;
+  color: var(--text);
+}
+#login {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+#card {
+  background: #fff;
+  padding: 2.2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  width: 340px;
+  text-align: center;
+}
+#app {
+  display: none;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+#side {
+  background: var(--primary);
+  color: #fff;
+  padding: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.nav:hover,
+.nav.active {
+  background: rgba(255 255 255 / 0.18);
+}
+#content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+header.top {
+  background: #fff;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+header.top h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--primary-dark);
+}
+.section {
+  padding: 1.5rem;
+  display: none;
+  overflow-x: auto;
+}
+.section.active {
+  display: block;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background: #fff;
+}
+th,
+td {
+  padding: 0.65rem 0.8rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: center;
+  white-space: nowrap;
+}
+th {
+  background: #f0f2f5;
+  font-weight: 600;
+}
+.btn-toggle {
+  margin: 0.4rem 0.2rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+}
+.btn-toggle:hover {
+  background: var(--primary-dark);
+}
+.clickable {
+  cursor: pointer;
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+#popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  max-width: 480px;
+  width: 90%;
+  display: none;
+  z-index: 999;
+}
+#popup button {
+  background: #b91c1c;
+  margin-top: 1rem;
+}
+.inline-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+}
+.list-item button {
+  background: #b91c1c;
+  border: none;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+  font-size: 0.9rem;
+}
+#col-list,
+#subj-list,
+#abs-type-list {
+  list-style: none;
+  padding: 0;
+  max-height: 100px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+.status-aanwezig {
+  color: green;
+}
+.status-afwezig {
+  color: red;
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="login">
+  <div id="card">
+    <h1>Bijles Portaal</h1>
+    <form id="form-login">
+      <input id="lu" placeholder="Gebruikersnaam" autocomplete="username" required style="width:100%;margin-bottom:.8rem" />
+      <input type="password" id="lp" placeholder="Wachtwoord" autocomplete="current-password" required style="width:100%;margin-bottom:1.2rem" />
+      <button style="width:100%">Inloggen</button>
+    </form>
+  </div>
+</section>
+
+<!-- APP -->
+<div id="app">
+  <aside id="side">
+    <h2 style="text-align:center;margin:0 0 1rem">📚 Bijles</h2>
+    <a href="#" class="nav active" data-sec="grades"><i class="fa-solid fa-chart-column"></i>Cijfers</a>
+    <a href="#" class="nav" data-sec="attendance"><i class="fa-solid fa-user-check"></i>Aanwezigheid</a>
+    <a href="#" class="nav" data-sec="timetable"><i class="fa-solid fa-calendar-days"></i>Rooster</a>
+    <a href="#" class="nav" data-sec="absence"><i class="fa-solid fa-user-clock"></i>Absentie</a>
+    <a href="#" class="nav" data-sec="admin" id="admin-link" style="display:none"><i class="fa-solid fa-gear"></i>Beheer</a>
+    <button id="logout" class="secondary" style="margin:1rem">Uitloggen</button>
+  </aside>
+  <div id="content">
+    <header class="top">
+      <h1 id="title">Cijfers</h1>
+      <span id="usr" style="font-weight:600"></span>
+    </header>
+
+    <!-- Cijfers -->
+    <section id="grades" class="section active">
+      <table id="tbl-ov">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+      <small>* Klik op cijfer voor detail</small>
+    </section>
+
+    <!-- Attendance -->
+    <section id="attendance" class="section">
+      <table id="tbl-att">
+        <thead>
+          <tr><th>Datum</th><th>Status</th><th>Actie</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Timetable -->
+    <section id="timetable" class="section">
+      <table id="tbl-tt">
+        <thead><tr><th>Datum</th><th>Tijd</th><th>Omschrijving</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Absentie -->
+    <section id="absence" class="section">
+      <table id="tbl-absence">
+        <thead><tr><th>Datum</th><th>Status</th><th>Type</th><th>Actie</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Admin -->
+    <section id="admin" class="section">
+      <h3>Kolommen beheren (alleen Zainy)</h3>
+      <form id="form-col" class="inline-form">
+        <input id="new-col" placeholder="Kolomnaam (bijv. PT4)" required />
+        <button>Toevoegen</button>
+      </form>
+      <ul id="col-list"></ul>
+
+      <h3>Vakken beheren (alleen Zainy)</h3>
+      <form id="form-subject" class="inline-form">
+        <input id="new-subj" placeholder="Vaknaam (bijv. Wiskunde)" required />
+        <button>Toevoegen</button>
+      </form>
+      <ul id="subj-list"></ul>
+
+      <h3>Absentie Types beheren (alleen Zainy)</h3>
+      <form id="form-abs-type" class="inline-form">
+        <input id="new-abs-type" placeholder="Absentie type (bijv. TL)" required />
+        <button>Toevoegen</button>
+      </form>
+      <ul id="abs-type-list"></ul>
+
+      <h3>Cijfers toevoegen (alleen Zainy)</h3>
+      <form id="form-grade" class="inline-form" style="flex-wrap: wrap; gap: 0.5rem;">
+        <select id="sel-user" style="min-width:120px"></select>
+        <select id="sel-subject" style="min-width:120px"></select>
+        <select id="sel-col" style="min-width:120px"></select>
+        <input id="val" type="number" step="0.1" placeholder="Cijfer" style="width:70px" required />
+        <input id="det" placeholder="Detail (optioneel)" style="flex:1" />
+        <label style="display:flex;align-items:center;gap:0.3rem; margin-left: 1rem;">
+          <input type="checkbox" id="for-all" /> Voor iedereen
+        </label>
+        <button type="submit">Toevoegen</button>
+      </form>
+
+      <h3>Rooster toevoegen (alleen Zainy)</h3>
+      <form id="form-timetable" class="inline-form">
+        <input type="date" id="tt-date" required />
+        <input type="time" id="tt-time" required />
+        <input type="text" id="tt-desc" placeholder="Omschrijving" required style="flex:1" />
+        <button type="submit">Toevoegen</button>
+      </form>
+      <table id="tbl-tt-admin">
+        <thead><tr><th>Datum</th><th>Tijd</th><th>Omschrijving</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <h3>Absenties toevoegen (alleen Zainy)</h3>
+      <form id="form-absence" class="inline-form" style="flex-wrap: wrap; gap: 0.5rem; align-items:center;">
+        <select id="sel-abs-user" style="min-width:120px"></select>
+        <input type="date" id="abs-date" required />
+        <select id="sel-abs-type" style="min-width:120px"></select>
+        <select id="sel-abs-status" required>
+          <option value="Afwezig">Afwezig</option>
+          <option value="Te Laat">Te Laat</option>
+          <option value="Vrij">Vrij</option>
+          <option value="Anders">Anders</option>
+        </select>
+        <button type="submit">Toevoegen</button>
+      </form>
+      <table id="tbl-absence-admin">
+        <thead><tr><th>Persoon</th><th>Datum</th><th>Status</th><th>Type</th><th>Actie</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+    </section>
+  </div>
+</div>
+
+<!-- POPUP -->
+<div id="popup">
+  <h3>Detail</h3>
+  <div id="pop-body"></div>
+  <button id="close-pop">Sluiten</button>
+</div>
+
+<script>
+/* ---------- DATA & STORAGE ---------- */
+const defaultCols = ["PT3","P3","PR","Werkh.","H ond 1","H ond 2","H ond 3","H ond 4","H ond 5","H ond 6","H P1","% H P1","H P2","% H P2","H P3","% H P3","Totaal H","% totaal H"];
+const defaultSubjects = ["Nederlands", "Engels", "Wiskunde"];
+const defaultAbsTypes = ["TL", "Ziek", "Overig"];
+const defaultStudents = {
+  zainy: { password:"1234", name:"Zainy", grades:[], attendance:[], timetable: [], absence: [] },
+  jab: { password:"1234", name:"JAB", grades:[], attendance:[], timetable: [], absence: [] },
+  jam: { password:"1234", name:"JAM", grades:[], attendance:[], timetable: [], absence: [] }
+};
+let students = JSON.parse(localStorage.getItem('bijlesStudents') || 'null') || structuredClone(defaultStudents);
+let columns = JSON.parse(localStorage.getItem('bijlesCols') || 'null') || structuredClone(defaultCols);
+let subjects = JSON.parse(localStorage.getItem('bijlesSubjects') || 'null') || structuredClone(defaultSubjects);
+let absTypes = JSON.parse(localStorage.getItem('bijlesAbsTypes') || 'null') || structuredClone(defaultAbsTypes);
+
+function save(){
+  localStorage.setItem('bijlesStudents', JSON.stringify(students));
+  localStorage.setItem('bijlesCols', JSON.stringify(columns));
+  localStorage.setItem('bijlesSubjects', JSON.stringify(subjects));
+  localStorage.setItem('bijlesAbsTypes', JSON.stringify(absTypes));
+}
+
+/* ---------- HELPERS ---------- */
+const $ = q => document.querySelector(q);
+const $$ = q => document.querySelectorAll(q);
+let curUser = null;
+
+/* ---------- RENDER FUNCTIES ---------- */
+function renderOverview(u){
+  const thead = $('#tbl-ov thead');
+  const tbody = $('#tbl-ov tbody');
+  thead.innerHTML = '<tr><th>Vak</th>' + columns.map(c => `<th>${c}</th>`).join('') + '</tr>';
+  tbody.innerHTML = '';
+  const vakken = [...new Set(u.grades.map(g => g.subject))];
+  vakken.forEach(vak => {
+    let row = `<tr><td>${vak}</td>`;
+    columns.forEach(col => {
+      // zoek cijfer op vak + kolom
+      const g = u.grades.find(x => x.subject === vak && x.detail === col);
+      if(g){
+        row += `<td class="clickable" data-vak="${vak}" data-grade="${g.grade}" data-det="${g.detail || ''}">${g.grade}</td>`;
+      } else {
+        row += '<td></td>';
+      }
+    });
+    row += '</tr>';
+    tbody.insertAdjacentHTML('beforeend', row);
+  });
+  $$('#tbl-ov td.clickable').forEach(td => {
+    td.onclick = () => {
+      $('#pop-body').innerHTML = `<b>Vak:</b> ${td.dataset.vak}<br><b>Cijfer:</b> ${td.dataset.grade}<br><b>Detail:</b> ${td.dataset.det || 'Geen'}`;
+      $('#popup').style.display = 'block';
+    };
+  });
+}
+
+function renderAttendance(u){
+  const tb = $('#tbl-att tbody');
+  tb.innerHTML = '';
+  u.attendance.forEach((a,i) => {
+    tb.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${a.date}</td>
+        <td>${a.status}</td>
+        <td>${a.status === 'Aanwezig' ? `<button class='secondary' data-i='${i}'>Afmelden</button>` : ''}</td>
+      </tr>`);
+  });
+  tb.querySelectorAll('button').forEach(b => {
+    b.onclick = e => {
+      u.attendance[b.dataset.i].status = 'Afwezig';
+      save();
+      renderAttendance(u);
+    };
+  });
+}
+
+function renderTimetable(u){
+  const tb = $('#tbl-tt tbody');
+  tb.innerHTML = '';
+  u.timetable.forEach(item => {
+    tb.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${item.date}</td>
+        <td>${item.time}</td>
+        <td>${item.desc}</td>
+      </tr>
+    `);
+  });
+}
+
+function renderAbsence(){
+  if(!curUser) return;
+  const tb = $('#tbl-absence tbody');
+  tb.innerHTML = '';
+  curUser.absence.forEach((a,i) => {
+    tb.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${a.date}</td>
+        <td class="${a.status==='Aanwezig' ? 'status-aanwezig' : 'status-afwezig'}">${a.status}</td>
+        <td>${a.type}</td>
+        <td>${a.status !== 'Aanwezig' ? `<button class="secondary" data-i="${i}">Markeer Aanwezig</button>` : ''}</td>
+      </tr>
+    `);
+  });
+  tb.querySelectorAll('button').forEach(b => {
+    b.onclick = e => {
+      curUser.absence[b.dataset.i].status = 'Aanwezig';
+      save();
+      renderAbsence();
+    };
+  });
+}
+
+function renderColList(){
+  const ul = $('#col-list');
+  ul.innerHTML = '';
+  columns.forEach((c,i) => {
+    ul.insertAdjacentHTML('beforeend', `
+      <li class="list-item">${c} <button data-i="${i}">Verwijderen</button></li>
+    `);
+  });
+  ul.querySelectorAll('button').forEach(btn => {
+    btn.onclick = e => {
+      if(curUser.username !== 'zainy') return alert('Alleen Zainy mag kolommen verwijderen.');
+      const i = btn.dataset.i;
+      columns.splice(i, 1);
+      save();
+      renderColList();
+      updateColSelect();
+      renderOverview(curUser);
+    };
+  });
+}
+
+function renderSubjList(){
+  const ul = $('#subj-list');
+  ul.innerHTML = '';
+  subjects.forEach((s,i) => {
+    ul.insertAdjacentHTML('beforeend', `
+      <li class="list-item">${s} <button data-i="${i}">Verwijderen</button></li>
+    `);
+  });
+  ul.querySelectorAll('button').forEach(btn => {
+    btn.onclick = e => {
+      if(curUser.username !== 'zainy') return alert('Alleen Zainy mag vakken verwijderen.');
+      const i = btn.dataset.i;
+      subjects.splice(i, 1);
+      save();
+      renderSubjList();
+      updateSubjSelect();
+      renderOverview(curUser);
+    };
+  });
+}
+
+function renderAbsTypeList(){
+  const ul = $('#abs-type-list');
+  ul.innerHTML = '';
+  absTypes.forEach((a,i) => {
+    ul.insertAdjacentHTML('beforeend', `
+      <li class="list-item">${a} <button data-i="${i}">Verwijderen</button></li>
+    `);
+  });
+  ul.querySelectorAll('button').forEach(btn => {
+    btn.onclick = e => {
+      if(curUser.username !== 'zainy') return alert('Alleen Zainy mag absentie types verwijderen.');
+      const i = btn.dataset.i;
+      absTypes.splice(i, 1);
+      save();
+      renderAbsTypeList();
+      updateAbsTypeSelect();
+      renderAbsence();
+    };
+  });
+}
+
+function populateUserSelect(){
+  const sel = $('#sel-user');
+  sel.innerHTML = '';
+  const selAbsUser = $('#sel-abs-user');
+  selAbsUser.innerHTML = '';
+  Object.entries(students).forEach(([key, val]) => {
+    const option = `<option value="${key}">${val.name}</option>`;
+    sel.insertAdjacentHTML('beforeend', option);
+    selAbsUser.insertAdjacentHTML('beforeend', option);
+  });
+}
+
+function updateColSelect(){
+  const sel = $('#sel-col');
+  sel.innerHTML = '';
+  columns.forEach(c => {
+    sel.insertAdjacentHTML('beforeend', `<option value="${c}">${c}</option>`);
+  });
+}
+
+function updateSubjSelect(){
+  const sel = $('#sel-subject');
+  sel.innerHTML = '';
+  subjects.forEach(s => {
+    sel.insertAdjacentHTML('beforeend', `<option value="${s}">${s}</option>`);
+  });
+}
+
+function updateAbsTypeSelect(){
+  const sel = $('#sel-abs-type');
+  sel.innerHTML = '';
+  absTypes.forEach(a => {
+    sel.insertAdjacentHTML('beforeend', `<option value="${a}">${a}</option>`);
+  });
+}
+
+function setSection(sec){
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelector(`#${sec}`).classList.add('active');
+  $('#title').textContent = {
+    grades: 'Cijfers',
+    attendance: 'Aanwezigheid',
+    timetable: 'Rooster',
+    absence: 'Absentie',
+    admin: 'Beheer'
+  }[sec] || '';
+  // active nav highlight
+  $$('#side .nav').forEach(nav => {
+    nav.classList.toggle('active', nav.dataset.sec === sec);
+  });
+}
+
+/* ---------- LOGIN ---------- */
+$('#form-login').onsubmit = e => {
+  e.preventDefault();
+  const u = $('#lu').value.toLowerCase();
+  const p = $('#lp').value;
+  if (!students[u]) return alert('Onbekende gebruiker');
+  if (students[u].password !== p) return alert('Wachtwoord incorrect');
+  curUser = {username: u, ...students[u]};
+  $('#login').style.display = 'none';
+  $('#app').style.display = 'grid';
+  $('#usr').textContent = curUser.name;
+  // admin link alleen zichtbaar voor zainy
+  $('#admin-link').style.display = u === 'zainy' ? 'block' : 'none';
+  // nav default naar cijfers
+  setSection('grades');
+  // vul selects
+  populateUserSelect();
+  updateColSelect();
+  updateSubjSelect();
+  updateAbsTypeSelect();
+  // render alles
+  renderOverview(curUser);
+  renderAttendance(curUser);
+  renderTimetable(curUser);
+  renderAbsence();
+  // reset login form
+  $('#form-login').reset();
+};
+
+/* ---------- LOGOUT ---------- */
+$('#logout').onclick = () => {
+  curUser = null;
+  $('#app').style.display = 'none';
+  $('#login').style.display = 'flex';
+};
+
+/* ---------- NAVIGATIE ---------- */
+$$('#side .nav').forEach(nav => {
+  nav.onclick = e => {
+    e.preventDefault();
+    setSection(nav.dataset.sec);
+  };
+});
+
+/* ---------- ADMIN: KOLONNEN TOEVOEGEN/VERWIJDEREN ---------- */
+$('#form-col').onsubmit = e => {
+  e.preventDefault();
+  if (curUser.username !== 'zainy') return alert('Alleen Zainy mag kolommen toevoegen.');
+  const val = $('#new-col').value.trim();
+  if (val && !columns.includes(val)) {
+    columns.push(val);
+    save();
+    renderColList();
+    updateColSelect();
+    renderOverview(curUser);
+    $('#new-col').value = '';
+  }
+};
+
+/* ---------- ADMIN: VAKKEN TOEVOEGEN/VERWIJDEREN ---------- */
+$('#form-subject').onsubmit = e => {
+  e.preventDefault();
+  if (curUser.username !== 'zainy') return alert('Alleen Zainy mag vakken toevoegen.');
+  const val = $('#new-subj').value.trim();
+  if (val && !subjects.includes(val)) {
+    subjects.push(val);
+    save();
+    renderSubjList();
+    updateSubjSelect();
+    renderOverview(curUser);
+    $('#new-subj').value = '';
+  }
+};
+
+/* ---------- ADMIN: ABSENTIE TYPES TOEVOEGEN/VERWIJDEREN ---------- */
+$('#form-abs-type').onsubmit = e => {
+  e.preventDefault();
+  if (curUser.username !== 'zainy') return alert('Alleen Zainy mag absentie types toevoegen.');
+  const val = $('#new-abs-type').value.trim();
+  if (val && !absTypes.includes(val)) {
+    absTypes.push(val);
+    save();
+    renderAbsTypeList();
+    updateAbsTypeSelect();
+    renderAbsence();
+    $('#new-abs-type').value = '';
+  }
+};
+
+/* ---------- CIJFERS TOEVOEGEN ---------- */
+$('#form-grade').onsubmit = e => {
+  e.preventDefault();
+  if (curUser.username !== 'zainy') return alert('Alleen Zainy mag cijfers invoeren.');
+  const userKey = $('#sel-user').value;
+  const subject = $('#sel-subject').value;
+  const col = $('#sel-col').value;
+  const gradeVal = parseFloat($('#val').value);
+  const det = $('#det').value.trim();
+  const forAll = $('#for-all').checked;
+
+  if (isNaN(gradeVal) || gradeVal < 1 || gradeVal > 10) return alert('Voer een geldig cijfer in (1-10).');
+
+  if (forAll) {
+    // Voeg cijfer toe voor iedereen
+    Object.keys(students).forEach(k => {
+      students[k].grades.push({subject, detail: col, grade: gradeVal});
+    });
+  } else {
+    students[userKey].grades.push({subject, detail: col, grade: gradeVal});
+  }
+  save();
+  renderOverview(curUser);
+  $('#val').value = '';
+  $('#det').value = '';
+};
+
+/* ---------- ROOSTER TOEVOEGEN (ALLEEN BEHEER) ---------- */
+$('#form-timetable').onsubmit = e => {
+  e.preventDefault();
+  if (curUser.username !== 'zainy') return alert('Alleen Zainy mag roosters toevoegen.');
+  const date = $('#tt-date').value;
+  const time = $('#tt-time').value;
+  const desc = $('#tt-desc').value.trim();
+  if (!date || !time || !desc) return alert('Vul alle velden in.');
+  students[curUser.username].timetable.push({date, time, desc});
+  if(curUser.username === 'zainy') curUser.timetable = students[curUser.username].timetable;
+  save();
+  renderTimetable(curUser);
+  $('#form-timetable').reset();
+};
+
+/* ---------- ABSENTIES TOEVOEGEN (ALLEEN BEHEER) ---------- */
+$('#form-absence').onsubmit = e => {
+  e.preventDefault();
+  if (curUser.username !== 'zainy') return alert('Alleen Zainy mag absenties toevoegen.');
+  const userKey = $('#sel-abs-user').value;
+  const date = $('#abs-date').value;
+  const type = $('#sel-abs-type').value;
+  const status = $('#sel-abs-status').value;
+  if(!date || !type || !status) return alert('Vul alle velden in.');
+  students[userKey].absence.push({date, type, status});
+  if(userKey === curUser.username) curUser.absence = students[userKey].absence;
+  save();
+  if(userKey === curUser.username) renderAbsence();
+  renderAdminAbsenceTable();
+  $('#form-absence').reset();
+};
+
+/* ---------- RENDER ADMIN TABELS VOOR ROOSTER & ABSENTIE ---------- */
+function renderAdminTimetable(){
+  const tbody = $('#tbl-tt-admin tbody');
+  tbody.innerHTML = '';
+  students[curUser.username].timetable.forEach(t => {
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr><td>${t.date}</td><td>${t.time}</td><td>${t.desc}</td></tr>
+    `);
+  });
+}
+function renderAdminAbsenceTable(){
+  const tbody = $('#tbl-absence-admin tbody');
+  tbody.innerHTML = '';
+  Object.entries(students).forEach(([key, val]) => {
+    val.absence.forEach((a,i) => {
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${val.name}</td>
+          <td>${a.date}</td>
+          <td>${a.status}</td>
+          <td>${a.type}</td>
+          <td>${a.status !== 'Aanwezig' && curUser.username==='zainy' ? `<button class="secondary" data-user="${key}" data-i="${i}">Markeer Aanwezig</button>` : ''}</td>
+        </tr>
+      `);
+    });
+  });
+  tbody.querySelectorAll('button').forEach(btn => {
+    btn.onclick = e => {
+      const user = btn.dataset.user;
+      const idx = btn.dataset.i;
+      students[user].absence[idx].status = 'Aanwezig';
+      if(user === curUser.username) curUser.absence = students[user].absence;
+      save();
+      renderAbsence();
+      renderAdminAbsenceTable();
+    };
+  });
+}
+
+/* ---------- INIT ---------- */
+renderColList();
+renderSubjList();
+renderAbsTypeList();
+populateUserSelect();
+updateColSelect();
+updateSubjSelect();
+updateAbsTypeSelect();
+
+/* ---------- POPUP ---------- */
+$('#close-pop').onclick = () => {
+  $('#popup').style.display = 'none';
+};
+
+</script>
+
+</body>
+</html>
