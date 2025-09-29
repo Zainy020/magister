@@ -1,200 +1,79 @@
-import React, { useState } from 'react'
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bijles Portaal</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-blue-50 p-6 font-sans">
 
-const USERS = [
-  { id: 'zzainy', name: 'Zainy (Leraar)', role: 'teacher', code: 'teach123' },
-  { id: 'abdoulaye', name: 'Abdoulaye', role: 'student', code: 'studA' },
-  { id: 'mohamedou', name: 'Mohamedou', role: 'student', code: 'studM' },
-]
+<div id="root"></div>
 
-export default function App() {
-  const [user, setUser] = useState(null)
-  const [users] = useState(USERS)
+<!-- React + ReactDOM CDN -->
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+<!-- Je React code -->
+<script type="text/babel">
+const { useState } = React;
+
+function App() {
+  const [user, setUser] = useState(null);
+  const USERS = [
+    { id: 'zzainy', name: 'Zainy (Leraar)', role: 'teacher', code: 'teach123' },
+    { id: 'abdoulaye', name: 'Abdoulaye', role: 'student', code: 'studA' },
+  ];
   const [lessons, setLessons] = useState([
-    { id: 1, title: 'Begrijpend lezen - Tekstbegrip', date: '2025-10-01', assignments: [{ id: 1, title: 'Oefentoets Rekenen', due: '2025-10-05', submissions: [] }], cancelled:false },
-    { id: 2, title: 'Rekenen - Lineaire formules', date: '2025-10-03', assignments: [], cancelled:false },
-  ])
-  const [pta] = useState([{ id: 1, title: 'Werkstuk - eindopdracht', date: '2025-12-01' }])
-  const [rooster] = useState([
-    { day: 'Maandag', item: 'Rekenen - 10:00' },
-    { day: 'Dinsdag', item: 'Taal - 11:00' },
-  ])
+    { id: 1, title: 'Begrijpend lezen', cancelled: false },
+    { id: 2, title: 'Rekenen', cancelled: false },
+  ]);
 
   const login = (id, code) => {
-    const u = users.find(x => x.id === id && x.code === code)
-    if (u) setUser(u)
-    else alert('Onjuiste user of code')
-  }
-
-  const logout = () => setUser(null)
-
-  const addAssignment = (title, due, lessonId=null) => {
-    const newAssignment = { id: Date.now(), title, due, submissions: [] }
-    if(lessonId){
-      setLessons(prev => prev.map(l => l.id === lessonId ? { ...l, assignments: [newAssignment, ...l.assignments] } : l))
-    }
-  }
-
-  const addLesson = (title, date) => {
-    const newLesson = { id: Date.now(), title, date, assignments: [], cancelled:false }
-    setLessons(prev => [newLesson, ...prev])
-  }
-
-  const submitAssignment = (lessonId, assignmentId) => {
-    setLessons(prev => prev.map(l => {
-      if(l.id !== lessonId) return l
-      return { ...l, assignments: l.assignments.map(a => {
-        if(a.id !== assignmentId) return a
-        if(a.submissions.includes(user.id)) return a
-        return { ...a, submissions: [...a.submissions, user.id] }
-      })}
-    }))
-  }
-
-  const cancelLesson = (id) => {
-    setLessons(prev => prev.map(l => l.id === id ? { ...l, cancelled: !l.cancelled } : l))
+    const u = USERS.find(x => x.id===id && x.code===code);
+    if(u) setUser(u);
+    else alert('Onjuiste login');
   }
 
   return (
-    <div className="min-h-screen bg-blue-50 p-6 font-sans">
-      <header className="max-w-5xl mx-auto mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-blue-700">Bijles Portaal</h1>
-        <div className="text-sm text-blue-600">Magister-style • user+code login</div>
-      </header>
-
-      <main className="max-w-5xl mx-auto">
-        {!user ? (
-          <LoginPanel users={users} onLogin={login} />
-        ) : (
-          <Dashboard
-            user={user}
-            onLogout={logout}
-            lessons={lessons}
-            addAssignment={addAssignment}
-            addLesson={addLesson}
-            submitAssignment={submitAssignment}
-            cancelLesson={cancelLesson}
-            pta={pta}
-            rooster={rooster}
-          />
-        )}
-      </main>
+    <div>
+      {!user ? (
+        <LoginPanel users={USERS} onLogin={login} />
+      ) : (
+        <div>
+          <h1>Welkom {user.name}</h1>
+          <ul>
+            {lessons.map(l => (
+              <li key={l.id}>{l.title} {l.cancelled && '(Vervallen)'}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
-  )
+  );
 }
 
 function LoginPanel({ users, onLogin }) {
-  const [selected, setSelected] = useState(users[0].id)
-  const [code, setCode] = useState('')
+  const [id, setId] = useState(users[0].id);
+  const [code, setCode] = useState('');
 
   return (
-    <div className="bg-white shadow rounded p-6">
-      <h2 className="text-xl font-semibold mb-4 text-blue-700">Inloggen</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <select value={selected} onChange={e => setSelected(e.target.value)} className="p-2 border rounded">
-          {users.map(u => (
-            <option key={u.id} value={u.id}>{u.name} — {u.role}</option>
-          ))}
-        </select>
-        <input value={code} onChange={e => setCode(e.target.value)} placeholder="code" className="p-2 border rounded" />
-        <button onClick={() => onLogin(selected, code)} className="px-4 py-2 bg-blue-600 text-white rounded">Login</button>
-      </div>
-      <p className="text-xs text-blue-500 mt-3">Tip: test codes zijn: teach123, studA, studM</p>
+    <div>
+      <select value={id} onChange={e=>setId(e.target.value)}>
+        {users.map(u=>(
+          <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+        ))}
+      </select>
+      <input value={code} onChange={e=>setCode(e.target.value)} placeholder="Code" />
+      <button onClick={()=>onLogin(id, code)}>Login</button>
     </div>
-  )
+  );
 }
 
-function Dashboard({ user, onLogout, lessons, addAssignment, addLesson, submitAssignment, cancelLesson, pta, rooster }) {
-  const [newLessonTitle, setNewLessonTitle] = useState('')
-  const [newLessonDate, setNewLessonDate] = useState('')
-  const [openLessonId, setOpenLessonId] = useState(null)
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
-        <div className="bg-white shadow rounded p-4 mb-4 flex items-center justify-between">
-          <div>
-            <div className="text-sm text-blue-500">Ingelogd als</div>
-            <div className="font-semibold">{user.name} • {user.role}</div>
-          </div>
-          <div className="space-x-2">
-            <button onClick={onLogout} className="px-3 py-1 border rounded">Logout</button>
-          </div>
-        </div>
-
-        <section className="bg-white shadow rounded p-4 mb-4">
-          <h3 className="font-semibold mb-3 text-blue-700">Lessen</h3>
-          {user.role==='teacher' && (
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2">
-              <input value={newLessonTitle} onChange={e=>setNewLessonTitle(e.target.value)} placeholder="Titel les" className="p-2 border rounded" />
-              <input value={newLessonDate} onChange={e=>setNewLessonDate(e.target.value)} placeholder="Datum (YYYY-MM-DD)" className="p-2 border rounded" />
-              <button onClick={()=>{if(newLessonTitle&&newLessonDate){addLesson(newLessonTitle,newLessonDate);setNewLessonTitle('');setNewLessonDate('')}}} className="px-3 py-2 bg-blue-600 text-white rounded">Les toevoegen</button>
-            </div>
-          )}
-
-          <ul>
-            {lessons.map(l => (
-              <li key={l.id} className={`py-2 border-b last:border-b-0 ${l.cancelled?'opacity-50':''}`}>
-                <div className="flex justify-between items-center cursor-pointer" onClick={()=>setOpenLessonId(openLessonId===l.id?null:l.id)}>
-                  <div>
-                    <div>{l.title} {l.cancelled && <span className="text-red-500 text-xs">(Vervallen)</span>}</div>
-                    <div className="text-sm text-blue-500">{l.date}</div>
-                  </div>
-                  {user.role==='teacher' && <button onClick={(e)=>{e.stopPropagation();cancelLesson(l.id)}} className="px-2 py-1 border rounded text-xs">Vervallen</button>}
-                </div>
-                {openLessonId===l.id && (
-                  <div className="mt-2">
-                    <div className="text-xs text-blue-600 mb-1">Opdrachten/Toetsen bij deze les:</div>
-                    {l.assignments.length===0 && <div className="text-xs text-gray-400">Nog niets ingepland</div>}
-                    <ul className="mb-2">
-                      {l.assignments.map(a => (
-                        <li key={a.id} className="text-xs text-blue-700 flex justify-between">
-                          <span>- {a.title} • af: {a.due}</span>
-                          {user.role==='student' && <button onClick={() => submitAssignment(l.id,a.id)} className="px-2 py-0.5 border rounded text-xs">Inleveren</button>}
-                        </li>
-                      ))}
-                    </ul>
-                    {user.role==='teacher' && <AddAssignmentForm onAdd={(title,due)=>addAssignment(title,due,l.id)} />}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-
-      <aside>
-        <div className="bg-white shadow rounded p-4 mb-4">
-          <h4 className="font-semibold mb-2 text-blue-700">Rooster</h4>
-          <ul className="text-sm text-blue-600">
-            {rooster.map((r,i) => <li key={i} className="py-1">{r.day}: {r.item}</li>)}
-          </ul>
-        </div>
-
-        <div className="bg-white shadow rounded p-4 mb-4">
-          <h4 className="font-semibold mb-2 text-blue-700">Leerlingen</h4>
-          <ul>
-            <li>Abdoulaye</li>
-            <li>Mohamedou</li>
-          </ul>
-        </div>
-
-        <div className="bg-white shadow rounded p-4">
-          <h4 className="font-semibold mb-2 text-blue-700">Agenda</h4>
-          {lessons.map(l => <div key={l.id} className="text-sm text-blue-600">- {l.date}: {l.title}</div>)}
-        </div>
-      </aside>
-    </div>
-  )
-}
-
-function AddAssignmentForm({ onAdd }) {
-  const [title, setTitle] = useState('')
-  const [due, setDue] = useState('')
-  return (
-    <div className="mb-2 grid grid-cols-1 md:grid-cols-3 gap-2">
-      <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Titel opdracht/toets" className="p-2 border rounded" />
-      <input value={due} onChange={e => setDue(e.target.value)} placeholder="Due (YYYY-MM-DD)" className="p-2 border rounded" />
-      <button onClick={() => { if(title && due){ onAdd(title,due); setTitle(''); setDue(''); } }} className="px-3 py-2 bg-blue-600 text-white rounded">Toevoegen</button>
-    </div>
-  )
-}
+</body>
+</html>
