@@ -1,7 +1,5 @@
 import React, { useState } from 'react'
 
-// Bijles-portaal prototype, nu met Magister-achtige UI, lesplanning, opdrachten per les, vervallen lessen en blauwe stijl
-
 const USERS = [
   { id: 'zzainy', name: 'Zainy (Leraar)', role: 'teacher', code: 'teach123' },
   { id: 'abdoulaye', name: 'Abdoulaye', role: 'student', code: 'studA' },
@@ -12,12 +10,8 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [users] = useState(USERS)
   const [lessons, setLessons] = useState([
-    { id: 1, title: 'Begrijpend lezen - Tekstbegrip', date: '2025-10-01', assignments: [], cancelled:false },
+    { id: 1, title: 'Begrijpend lezen - Tekstbegrip', date: '2025-10-01', assignments: [{ id: 1, title: 'Oefentoets Rekenen', due: '2025-10-05', submissions: [] }], cancelled:false },
     { id: 2, title: 'Rekenen - Lineaire formules', date: '2025-10-03', assignments: [], cancelled:false },
-  ])
-  const [assignments, setAssignments] = useState([
-    { id: 1, title: 'Oefentoets Rekenen', due: '2025-10-05', class: '3 Havo', submissions: [] },
-    { id: 2, title: 'Leesopdracht - hoofdstuk 2', due: '2025-10-02', class: '3 Havo', submissions: [] },
   ])
   const [pta] = useState([{ id: 1, title: 'Werkstuk - eindopdracht', date: '2025-12-01' }])
   const [rooster] = useState([
@@ -34,10 +28,9 @@ export default function App() {
   const logout = () => setUser(null)
 
   const addAssignment = (title, due, lessonId=null) => {
-    const newOne = { id: Date.now(), title, due, class: '3 Havo', submissions: [] }
-    setAssignments(prev => [newOne, ...prev])
+    const newAssignment = { id: Date.now(), title, due, submissions: [] }
     if(lessonId){
-      setLessons(prev=>prev.map(l=>l.id===lessonId?{...l,assignments:[...l.assignments,newOne]}:l))
+      setLessons(prev => prev.map(l => l.id === lessonId ? { ...l, assignments: [newAssignment, ...l.assignments] } : l))
     }
   }
 
@@ -46,12 +39,19 @@ export default function App() {
     setLessons(prev => [newLesson, ...prev])
   }
 
-  const submitAssignment = (assignmentId) => {
-    setAssignments(prev => prev.map(a => a.id===assignmentId?{...a, submissions:[...a.submissions, user.id]}:a))
+  const submitAssignment = (lessonId, assignmentId) => {
+    setLessons(prev => prev.map(l => {
+      if(l.id !== lessonId) return l
+      return { ...l, assignments: l.assignments.map(a => {
+        if(a.id !== assignmentId) return a
+        if(a.submissions.includes(user.id)) return a
+        return { ...a, submissions: [...a.submissions, user.id] }
+      })}
+    }))
   }
 
   const cancelLesson = (id) => {
-    setLessons(prev=>prev.map(l=>l.id===id?{...l,cancelled:!l.cancelled}:l))
+    setLessons(prev => prev.map(l => l.id === id ? { ...l, cancelled: !l.cancelled } : l))
   }
 
   return (
@@ -69,7 +69,6 @@ export default function App() {
             user={user}
             onLogout={logout}
             lessons={lessons}
-            assignments={assignments}
             addAssignment={addAssignment}
             addLesson={addLesson}
             submitAssignment={submitAssignment}
@@ -104,10 +103,11 @@ function LoginPanel({ users, onLogin }) {
   )
 }
 
-function Dashboard({ user, onLogout, lessons, assignments, addAssignment, addLesson, submitAssignment, cancelLesson, pta, rooster }) {
+function Dashboard({ user, onLogout, lessons, addAssignment, addLesson, submitAssignment, cancelLesson, pta, rooster }) {
   const [newLessonTitle, setNewLessonTitle] = useState('')
   const [newLessonDate, setNewLessonDate] = useState('')
   const [openLessonId, setOpenLessonId] = useState(null)
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2">
@@ -130,6 +130,7 @@ function Dashboard({ user, onLogout, lessons, assignments, addAssignment, addLes
               <button onClick={()=>{if(newLessonTitle&&newLessonDate){addLesson(newLessonTitle,newLessonDate);setNewLessonTitle('');setNewLessonDate('')}}} className="px-3 py-2 bg-blue-600 text-white rounded">Les toevoegen</button>
             </div>
           )}
+
           <ul>
             {lessons.map(l => (
               <li key={l.id} className={`py-2 border-b last:border-b-0 ${l.cancelled?'opacity-50':''}`}>
@@ -145,46 +146,16 @@ function Dashboard({ user, onLogout, lessons, assignments, addAssignment, addLes
                     <div className="text-xs text-blue-600 mb-1">Opdrachten/Toetsen bij deze les:</div>
                     {l.assignments.length===0 && <div className="text-xs text-gray-400">Nog niets ingepland</div>}
                     <ul className="mb-2">
-                      {l.assignments.map(a=>(
-                        <li key={a.id} className="text-xs text-blue-700">- {a.title} • af: {a.due}</li>
+                      {l.assignments.map(a => (
+                        <li key={a.id} className="text-xs text-blue-700 flex justify-between">
+                          <span>- {a.title} • af: {a.due}</span>
+                          {user.role==='student' && <button onClick={() => submitAssignment(l.id,a.id)} className="px-2 py-0.5 border rounded text-xs">Inleveren</button>}
+                        </li>
                       ))}
                     </ul>
                     {user.role==='teacher' && <AddAssignmentForm onAdd={(title,due)=>addAssignment(title,due,l.id)} />}
                   </div>
                 )}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="bg-white shadow rounded p-4 mb-4">
-          <h3 className="font-semibold mb-3 text-blue-700">Opdrachten & Toetsen</h3>
-          {user.role === 'teacher' && <AddAssignmentForm onAdd={addAssignment} />}
-          <ul>
-            {assignments.map(a => (
-              <li key={a.id} className="py-2 border-b last:border-b-0 flex justify-between items-center">
-                <div>
-                  <div className="font-medium">{a.title}</div>
-                  <div className="text-xs text-blue-500">{a.class} • af: {a.due}</div>
-                  <div className="text-xs text-blue-400">Inzendingen: {a.submissions.length}</div>
-                </div>
-                <div className="text-sm">
-                  {user.role === 'student' ? <button onClick={()=>submitAssignment(a.id)} className="px-2 py-1 border rounded">Inleveren</button> : <button className="px-2 py-1 border rounded">Bekijk inzendingen</button>}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="bg-white shadow rounded p-4">
-          <h3 className="font-semibold mb-3 text-blue-700">Studiewijzers & PTA</h3>
-          <ul>
-            {pta.map(p => (
-              <li key={p.id} className="py-2 border-b last:border-b-0">
-                <div className="flex justify-between">
-                  <div>{p.title}</div>
-                  <div className="text-sm text-blue-500">{p.date}</div>
-                </div>
               </li>
             ))}
           </ul>
@@ -209,8 +180,7 @@ function Dashboard({ user, onLogout, lessons, assignments, addAssignment, addLes
 
         <div className="bg-white shadow rounded p-4">
           <h4 className="font-semibold mb-2 text-blue-700">Agenda</h4>
-          <div className="text-sm text-blue-600">- 2025-10-01: Les Tekstbegrip</div>
-          <div className="text-sm text-blue-600">- 2025-10-05: Oefentoets Rekenen</div>
+          {lessons.map(l => <div key={l.id} className="text-sm text-blue-600">- {l.date}: {l.title}</div>)}
         </div>
       </aside>
     </div>
@@ -228,4 +198,3 @@ function AddAssignmentForm({ onAdd }) {
     </div>
   )
 }
- 
